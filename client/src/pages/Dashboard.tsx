@@ -6,7 +6,6 @@ import { Layout } from "@/components/Layout";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -36,23 +35,11 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState<string>("all");
   const [page, setPage] = useState(1);
-  
-  // Source filters - both selected by default
-  const [showAusTender, setShowAusTender] = useState(true);
-  const [showNSW, setShowNSW] = useState(true);
-
-  // Build sources array based on selections
-  const getSelectedSources = () => {
-    const sources: string[] = [];
-    if (showAusTender) sources.push("AusTender");
-    if (showNSW) sources.push("NSW eTendering");
-    return sources;
-  };
 
   const { data: tendersData, isLoading } = useTenders({
     search: searchTerm,
     category: category === "all" ? undefined : category,
-    sources: getSelectedSources(),
+    sources: ["AusTender"],
     page,
     limit: 12,
   });
@@ -64,10 +51,10 @@ export default function Dashboard() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h2 className="text-3xl font-display font-bold text-gray-900 dark:text-gray-100">
-              Government Tenders
+              Federal Government Tenders
             </h2>
             <p className="text-muted-foreground mt-1">
-              Discover opportunities from Australian government agencies
+              Discover opportunities from Australian federal government agencies
             </p>
           </div>
           {!isAuthenticated && (
@@ -78,33 +65,6 @@ export default function Dashboard() {
               </Button>
             </a>
           )}
-        </div>
-
-        {/* Source Filter Bar */}
-        <div className="flex flex-wrap items-center gap-3 p-4 bg-card rounded-xl border">
-          <span className="text-sm font-medium text-muted-foreground">Sources:</span>
-          <div className="flex items-center gap-2">
-            <Button
-              variant={showAusTender ? "default" : "outline"}
-              size="sm"
-              onClick={() => setShowAusTender(!showAusTender)}
-              className="toggle-elevate"
-              data-testid="button-source-austender"
-            >
-              AusTender (Federal)
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled
-              className="opacity-60 cursor-not-allowed"
-              data-testid="button-source-nsw"
-              title="NSW eTendering API is temporarily unavailable from cloud environments"
-            >
-              NSW eTendering
-              <Badge variant="outline" className="ml-2 text-xs">Unavailable</Badge>
-            </Button>
-          </div>
         </div>
 
         {/* Search and Category Filters */}
