@@ -1,4 +1,4 @@
-# GovTender Pro
+# Aussie Tenders
 
 An AI-powered platform helping Small and Medium Enterprises (SMEs) discover and compete for Australian federal government contracts.
 
@@ -6,7 +6,7 @@ An AI-powered platform helping Small and Medium Enterprises (SMEs) discover and 
 
 - **Real Tender Data**: Aggregates tenders from AusTender (Federal) - automatically syncs real contract data with no credentials required
   
-- **AI-Powered Summaries**: Get instant AI-generated summaries of tender documents using Anthropic Claude
+- **AI-Powered Summaries**: Automatic AI-generated summaries and categorization of tender documents using Anthropic Claude
 
 - **Pipeline Management**: Track tender opportunities through customizable Kanban-style stages
 

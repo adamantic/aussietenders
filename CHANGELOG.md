@@ -1,6 +1,17 @@
 # Changelog
 
-All notable changes to GovTender Pro will be documented in this file.
+All notable changes to Aussie Tenders will be documented in this file.
+
+## [1.2.0] - 2026-01-04
+
+### Changed
+- Renamed application from "GovTender Pro" to "Aussie Tenders"
+- Dashboard and Search pages are now publicly accessible without login
+- "Add to Pipeline" and "View Details" actions require authentication with friendly login dialog
+
+### Fixed
+- Sign out functionality now properly clears session
+- Layout correctly shows "Sign In with Replit" for unauthenticated users
 
 ## [1.1.0] - 2026-01-04
 
@@ -33,7 +44,7 @@ All notable changes to GovTender Pro will be documented in this file.
 ## [1.0.0] - 2026-01-03
 
 ### Added
-- Initial release of GovTender Pro
+- Initial release of Aussie Tenders
 - User authentication via Replit OpenID Connect
 - Tender search and filtering
 - AI-powered tender summaries using Anthropic Claude
