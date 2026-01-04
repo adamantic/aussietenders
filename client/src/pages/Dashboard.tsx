@@ -39,6 +39,11 @@ export default function Dashboard() {
 
   const { data: categories = [] } = useQuery<string[]>({
     queryKey: ["/api/tenders/categories"],
+    queryFn: async () => {
+      const res = await fetch("/api/tenders/categories");
+      if (!res.ok) throw new Error("Failed to fetch categories");
+      return res.json();
+    },
   });
 
   const { data: tendersData, isLoading } = useTenders({
