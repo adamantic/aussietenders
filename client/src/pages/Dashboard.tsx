@@ -258,11 +258,7 @@ function TenderCard({ tender, isAuthenticated }: { tender: any; isAuthenticated:
   };
 
   const handleViewDetails = () => {
-    if (!isAuthenticated) {
-      setShowLoginDialog(true);
-    } else {
-      setShowDetailsDialog(true);
-    }
+    setShowDetailsDialog(true);
   };
 
   return (

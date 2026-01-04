@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { getAuth } from "@clerk/express";
+import { getAuth, clerkClient } from "@clerk/express";
 import { authStorage } from "./storage";
 import { isAuthenticated, upsertClerkUser } from "./clerkAuth";
 
@@ -14,11 +14,12 @@ export function registerAuthRoutes(app: Express): void {
       let user = await authStorage.getUser(auth.userId);
       
       if (!user) {
+        const clerkUser = await clerkClient.users.getUser(auth.userId);
         await upsertClerkUser(
           auth.userId,
-          auth.sessionClaims?.email as string || "",
-          auth.sessionClaims?.firstName as string || "",
-          auth.sessionClaims?.lastName as string || ""
+          clerkUser.emailAddresses[0]?.emailAddress || "",
+          clerkUser.firstName || "",
+          clerkUser.lastName || ""
         );
         user = await authStorage.getUser(auth.userId);
       }

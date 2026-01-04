@@ -23,8 +23,7 @@ The frontend follows a page-based structure with protected routes requiring auth
 ### Backend Architecture
 - **Framework**: Express.js with TypeScript
 - **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: Replit OpenID Connect (OIDC) with Passport.js and express-session
-- **Session Storage**: PostgreSQL-backed sessions via connect-pg-simple
+- **Authentication**: Clerk authentication with @clerk/express middleware
 - **AI Integration**: Anthropic Claude API for tender summarization
 
 The server follows a modular structure with routes, storage layer, and Replit integrations separated into distinct modules. The storage layer implements an interface pattern for database operations.
@@ -35,7 +34,7 @@ The server follows a modular structure with routes, storage layer, and Replit in
 - Endpoints for tenders, pipeline management, company profiles, saved searches, and AI chat
 
 ### Database Schema
-- **users/sessions**: Replit Auth user management (mandatory tables)
+- **users**: User profiles linked to Clerk user IDs
 - **tenders**: Government tender listings with source, status, categories, and AI summaries
 - **companies**: User company profiles linked to auth users
 - **pipelineItems**: User's tender tracking pipeline with stages
@@ -43,7 +42,7 @@ The server follows a modular structure with routes, storage layer, and Replit in
 - **conversations/messages**: AI chat history
 
 ### Authentication Flow
-Uses Replit Auth (OpenID Connect) with automatic user provisioning. Session tokens stored in PostgreSQL with 7-day expiry. Protected routes check authentication via middleware.
+Uses Clerk authentication with automatic user provisioning. Frontend uses ClerkProvider and useUser hook for auth state. Backend uses clerkMiddleware to validate tokens and clerkClient.users.getUser() to fetch user profiles. Protected routes check authentication via isAuthenticated middleware.
 
 ### Recent Features (January 2026)
 - **Mobile Responsive Layout**: Collapsible sidebar with hamburger menu on mobile (< lg breakpoint)
@@ -62,8 +61,8 @@ Uses Replit Auth (OpenID Connect) with automatic user provisioning. Session toke
 - Schema migrations via Drizzle Kit (`npm run db:push`)
 
 ### Authentication
-- **Replit Auth**: OpenID Connect provider
-- Environment variables: `ISSUER_URL`, `REPL_ID`, `SESSION_SECRET`
+- **Clerk**: User authentication and session management
+- Environment variables: `VITE_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`
 
 ### Third-Party Libraries
 - **Drizzle ORM**: Type-safe database queries with PostgreSQL dialect
