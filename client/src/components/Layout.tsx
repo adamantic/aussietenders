@@ -7,6 +7,7 @@ import {
   KanbanSquare,
   Building2,
   LogOut,
+  LogIn,
   Bell,
   UserCircle
 } from "lucide-react";
@@ -62,26 +63,40 @@ export function Layout({ children }: LayoutProps) {
         </nav>
 
         <div className="p-4 border-t border-white/10">
-          <div className="flex items-center gap-3 px-2 mb-4">
-            {user?.profileImageUrl ? (
-               <img src={user.profileImageUrl} alt="Profile" className="w-8 h-8 rounded-full" />
-            ) : (
-               <UserCircle className="w-8 h-8 text-slate-400" />
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
-                {user?.firstName} {user?.lastName}
-              </p>
-              <p className="text-xs text-slate-400 truncate">{user?.email}</p>
-            </div>
-          </div>
-          <button
-            onClick={() => logout()}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign Out
-          </button>
+          {user ? (
+            <>
+              <div className="flex items-center gap-3 px-2 mb-4">
+                {user.profileImageUrl ? (
+                   <img src={user.profileImageUrl} alt="Profile" className="w-8 h-8 rounded-full" />
+                ) : (
+                   <UserCircle className="w-8 h-8 text-slate-400" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">
+                    {user.firstName} {user.lastName}
+                  </p>
+                  <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => logout()}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                data-testid="button-logout"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <a
+              href="/api/login"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium bg-primary text-white rounded-lg transition-colors hover:bg-primary/90"
+              data-testid="button-login"
+            >
+              <LogIn className="w-4 h-4" />
+              Sign In with Replit
+            </a>
+          )}
         </div>
       </div>
 

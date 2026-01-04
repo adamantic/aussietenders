@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTenders } from "@/hooks/use-tenders";
 import { useAddToPipeline } from "@/hooks/use-pipeline";
+import { useAuth } from "@/hooks/use-auth";
 import { Layout } from "@/components/Layout";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -15,17 +16,18 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter
 } from "@/components/ui/dialog";
 import { useSummarizeTender } from "@/hooks/use-tenders";
-import { Plus, Search, Filter, Loader2, Sparkles } from "lucide-react";
+import { Plus, Search, Filter, Loader2, Sparkles, LogIn, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 export default function SearchPage() {
+  const { isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState<string>("all");
   const [page, setPage] = useState(1);
@@ -81,7 +83,7 @@ export default function SearchPage() {
             </div>
           ) : (
             tendersData?.data.map((tender) => (
-              <TenderCard key={tender.id} tender={tender} />
+              <TenderCard key={tender.id} tender={tender} isAuthenticated={isAuthenticated} />
             ))
           )}
 
@@ -123,12 +125,18 @@ export default function SearchPage() {
   );
 }
 
-function TenderCard({ tender }: { tender: any }) {
+function TenderCard({ tender, isAuthenticated }: { tender: any; isAuthenticated: boolean }) {
   const { toast } = useToast();
   const { mutate: addToPipeline, isPending: isAdding } = useAddToPipeline();
   const { mutate: summarize, isPending: isSummarizing } = useSummarizeTender();
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
   const handleAdd = () => {
+    if (!isAuthenticated) {
+      setShowLoginDialog(true);
+      return;
+    }
     addToPipeline(
       { tenderId: tender.id, stage: "discovered", priority: "medium" },
       {
@@ -140,6 +148,14 @@ function TenderCard({ tender }: { tender: any }) {
         },
       }
     );
+  };
+
+  const handleViewDetails = () => {
+    if (!isAuthenticated) {
+      setShowLoginDialog(true);
+    } else {
+      setShowDetailsDialog(true);
+    }
   };
 
   return (
@@ -185,21 +201,26 @@ function TenderCard({ tender }: { tender: any }) {
             onClick={handleAdd} 
             disabled={isAdding}
             className="w-full bg-primary hover:bg-primary/90 shadow-md shadow-primary/20"
+            data-testid={`button-add-pipeline-${tender.id}`}
           >
             {isAdding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
             Add to Pipeline
           </Button>
           
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-full">
-                View Details
-              </Button>
-            </DialogTrigger>
+          <Button 
+            variant="outline" 
+            className="w-full" 
+            onClick={handleViewDetails}
+            data-testid={`button-view-details-${tender.id}`}
+          >
+            View Details
+          </Button>
+
+          <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-xl font-display">{tender.title}</DialogTitle>
-                <p className="text-sm text-gray-500">{tender.agency}</p>
+                <DialogDescription>{tender.agency}</DialogDescription>
               </DialogHeader>
               
               <div className="space-y-6 mt-4">
@@ -230,21 +251,20 @@ function TenderCard({ tender }: { tender: any }) {
                 </div>
 
                 {tender.aiSummary ? (
-                  <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
-                    <div className="flex items-center gap-2 text-purple-700 font-semibold mb-2">
+                  <div className="bg-purple-50 dark:bg-purple-950/30 p-4 rounded-xl border border-purple-100 dark:border-purple-900">
+                    <div className="flex items-center gap-2 text-purple-700 dark:text-purple-300 font-semibold mb-2">
                       <Sparkles className="w-4 h-4" /> AI Summary
                     </div>
-                    <p className="text-sm text-gray-700 leading-relaxed">{tender.aiSummary}</p>
+                    <p className="text-sm leading-relaxed">{tender.aiSummary}</p>
                   </div>
                 ) : (
-                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-center">
-                    <p className="text-sm text-gray-500 mb-3">Get a concise AI summary of this opportunity.</p>
+                  <div className="bg-muted p-4 rounded-xl border text-center">
+                    <p className="text-sm text-muted-foreground mb-3">Get a concise AI summary of this opportunity.</p>
                     <Button 
                       variant="secondary" 
                       size="sm" 
                       onClick={() => summarize(tender.id)}
                       disabled={isSummarizing}
-                      className="bg-white hover:bg-gray-100"
                     >
                       {isSummarizing ? (
                         <>Generating <Loader2 className="w-3 h-3 ml-2 animate-spin"/></>
@@ -265,6 +285,29 @@ function TenderCard({ tender }: { tender: any }) {
           </Dialog>
         </div>
       </div>
+
+      {/* Login Required Dialog */}
+      <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="w-5 h-5" />
+              Sign in required
+            </DialogTitle>
+            <DialogDescription>
+              Create a free account to add tenders to your pipeline and access detailed information.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 mt-4">
+            <a href="/api/login" className="w-full">
+              <Button className="w-full" data-testid="button-login-dialog">
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign In with Replit
+              </Button>
+            </a>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

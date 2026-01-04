@@ -39,13 +39,11 @@ function Router() {
     <Switch>
       <Route path="/" component={LandingPage} />
       
-      {/* Protected Routes */}
-      <Route path="/dashboard">
-        <ProtectedRoute component={Dashboard} />
-      </Route>
-      <Route path="/search">
-        <ProtectedRoute component={SearchPage} />
-      </Route>
+      {/* Public Routes - viewable without login, but some actions require auth */}
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/search" component={SearchPage} />
+      
+      {/* Protected Routes - require login */}
       <Route path="/pipeline">
         <ProtectedRoute component={PipelinePage} />
       </Route>

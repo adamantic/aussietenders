@@ -18,7 +18,8 @@ async function fetchUser(): Promise<User | null> {
 }
 
 async function logout(): Promise<void> {
-  window.location.href = "/api/logout";
+  // Navigate to the logout endpoint which destroys the session and redirects to Replit OIDC logout
+  window.location.replace("/api/logout");
 }
 
 export function useAuth() {
