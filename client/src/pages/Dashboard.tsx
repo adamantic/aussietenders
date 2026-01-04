@@ -224,6 +224,22 @@ function TenderCard({ tender, isAuthenticated }: { tender: any; isAuthenticated:
                 {tender.description}
               </p>
 
+              {/* AI Categories */}
+              {tender.aiCategories && tender.aiCategories.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {tender.aiCategories.map((cat: string) => (
+                    <span key={cat} className="text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-md font-medium">
+                      {cat}
+                    </span>
+                  ))}
+                  {tender.aiSummary && (
+                    <span className="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded-md font-medium flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> AI Summary
+                    </span>
+                  )}
+                </div>
+              )}
+
               <div className="flex flex-wrap gap-3 text-xs text-muted-foreground pt-2">
                 {tender.value && (
                   <div className="flex items-center gap-1 bg-muted px-2 py-1 rounded">
@@ -300,6 +316,20 @@ function TenderCard({ tender, isAuthenticated }: { tender: any; isAuthenticated:
                           <span className="font-medium">{tender.source}</span>
                         </div>
                       </div>
+
+                      {/* AI Categories in Dialog */}
+                      {tender.aiCategories && tender.aiCategories.length > 0 && (
+                        <div>
+                          <h4 className="font-semibold mb-2">Categories</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {tender.aiCategories.map((cat: string) => (
+                              <span key={cat} className="text-sm px-3 py-1 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-md font-medium">
+                                {cat}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
                       <div>
                         <h4 className="font-semibold mb-2">Description</h4>

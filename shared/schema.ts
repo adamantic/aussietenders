@@ -44,9 +44,12 @@ export const tenders = pgTable("tenders", {
   location: text("location"),
   publishDate: timestamp("publish_date"),
   closeDate: timestamp("close_date"),
-  categories: jsonb("categories").$type<string[]>(), // Array of UNSPSC codes/names
+  categories: jsonb("categories").$type<string[]>(), // Original categories from source
+  aiCategories: jsonb("ai_categories").$type<string[]>(), // AI-assigned business categories
   matchScore: integer("match_score").default(0), // Placeholder for AI matching score
   aiSummary: text("ai_summary"), // Cached AI summary
+  aiEnriched: boolean("ai_enriched").default(false), // Whether AI enrichment has been applied
+  aiEnrichedAt: timestamp("ai_enriched_at"), // When AI enrichment was applied
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

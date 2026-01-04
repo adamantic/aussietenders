@@ -40,8 +40,13 @@ export async function registerRoutes(
   // Get distinct categories for filter dropdown (must be before :id route)
   app.get("/api/tenders/categories", async (req, res) => {
     try {
-      const categories = await storage.getDistinctCategories();
-      res.json(categories);
+      // Get AI-assigned categories (more meaningful for filtering)
+      const aiCategories = await storage.getDistinctAICategories();
+      // Also get original categories as fallback
+      const originalCategories = await storage.getDistinctCategories();
+      // Combine and dedupe, preferring AI categories
+      const allCategories = Array.from(new Set([...aiCategories, ...originalCategories]));
+      res.json(allCategories);
     } catch (err) {
       res.status(500).json({ message: "Failed to fetch categories" });
     }

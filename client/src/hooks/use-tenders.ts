@@ -66,9 +66,10 @@ export function useSummarizeTender() {
       if (!res.ok) throw new Error("Failed to generate summary");
       return api.tenders.summarize.responses[200].parse(await res.json());
     },
-    onSuccess: (_, id) => {
-      // Invalidate specific tender query to refresh the summary field
-      queryClient.invalidateQueries({ queryKey: [api.tenders.get.path, id] });
+    onSuccess: () => {
+      // Invalidate all tender queries to refresh the summary field
+      queryClient.invalidateQueries({ queryKey: [api.tenders.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.tenders.get.path] });
     },
   });
 }

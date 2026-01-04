@@ -1,6 +1,7 @@
 import { fetchAusTenderContracts, testAusTenderConnection } from "./austender";
 import { fetchNSWTenders, testNSWConnection } from "./nsw-etendering";
 import { storage } from "../storage";
+import { enrichNewTenders } from "../ai-enrichment";
 import type { InsertTender, Tender } from "@shared/schema";
 
 export interface SyncResult {
@@ -23,6 +24,14 @@ export async function syncAllTenders(): Promise<SyncResult[]> {
   results.push(nswResult);
 
   console.log("[TenderSync] Sync complete:", results);
+
+  // Start AI enrichment in background (don't block sync completion)
+  console.log("[TenderSync] Starting AI enrichment of new tenders...");
+  enrichNewTenders(10).then((count) => {
+    console.log(`[TenderSync] AI enrichment completed: ${count} tenders enriched`);
+  }).catch((err) => {
+    console.error("[TenderSync] AI enrichment failed:", err);
+  });
 
   return results;
 }

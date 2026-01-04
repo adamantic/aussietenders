@@ -14,8 +14,10 @@ export interface IStorage {
   getTender(id: number): Promise<Tender | undefined>;
   getTenderByExternalId(externalId: string): Promise<Tender | undefined>;
   getDistinctCategories(): Promise<string[]>;
+  getDistinctAICategories(): Promise<string[]>;
+  getUnenrichedTenders(limit?: number): Promise<Tender[]>;
   createTender(tender: InsertTender): Promise<Tender>;
-  updateTender(id: number, tender: Partial<InsertTender>): Promise<Tender | undefined>;
+  updateTender(id: number, tender: Partial<InsertTender & { aiEnriched?: boolean, aiEnrichedAt?: Date, aiCategories?: string[] }>): Promise<Tender | undefined>;
   clearTenders(): Promise<void>;
   
   // Pipeline
@@ -47,8 +49,8 @@ export class DatabaseStorage implements IStorage {
       );
     }
     if (category) {
-      // JSONB array contains check using @> operator
-      conditions.push(sql`${tenders.categories}::jsonb @> ${JSON.stringify([category])}::jsonb`);
+      // Check both original categories and AI-assigned categories
+      conditions.push(sql`(${tenders.categories}::jsonb @> ${JSON.stringify([category])}::jsonb OR ${tenders.aiCategories}::jsonb @> ${JSON.stringify([category])}::jsonb)`);
     }
     if (source) {
       conditions.push(eq(tenders.source, source));
@@ -91,6 +93,22 @@ export class DatabaseStorage implements IStorage {
       sql`SELECT DISTINCT jsonb_array_elements_text(categories) as category FROM ${tenders} ORDER BY category`
     );
     return result.rows.map((row: any) => row.category as string);
+  }
+
+  async getDistinctAICategories(): Promise<string[]> {
+    const result = await db.execute(
+      sql`SELECT DISTINCT jsonb_array_elements_text(ai_categories) as category FROM ${tenders} WHERE ai_categories IS NOT NULL ORDER BY category`
+    );
+    return result.rows.map((row: any) => row.category as string);
+  }
+
+  async getUnenrichedTenders(limit: number = 10): Promise<Tender[]> {
+    return db
+      .select()
+      .from(tenders)
+      .where(sql`${tenders.aiEnriched} = false OR ${tenders.aiEnriched} IS NULL`)
+      .limit(limit)
+      .orderBy(desc(tenders.publishDate));
   }
 
   async createTender(tender: InsertTender): Promise<Tender> {
