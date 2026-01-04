@@ -45,6 +45,11 @@ The server follows a modular structure with routes, storage layer, and Replit in
 ### Authentication Flow
 Uses Replit Auth (OpenID Connect) with automatic user provisioning. Session tokens stored in PostgreSQL with 7-day expiry. Protected routes check authentication via middleware.
 
+### Recent Features (January 2026)
+- **Mobile Responsive Layout**: Collapsible sidebar with hamburger menu on mobile (< lg breakpoint)
+- **Sorting**: 5 sort options (Newest First, Closing Soon, Highest Value, Agency A-Z, Location A-Z)
+- **Export**: CSV (up to 1000 tenders) and PDF (up to 100 tenders) export with current filters
+
 ## External Dependencies
 
 ### AI Services
