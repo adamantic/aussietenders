@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useTenders } from "@/hooks/use-tenders";
 import { useAddToPipeline } from "@/hooks/use-pipeline";
 import { useQuery } from "@tanstack/react-query";
+import { SignInButton } from "@clerk/clerk-react";
 import { Layout } from "@/components/Layout";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,12 +85,12 @@ export default function Dashboard() {
             </p>
           </div>
           {!isAuthenticated && (
-            <a href="/api/login">
+            <SignInButton mode="modal">
               <Button data-testid="button-login-header">
                 <LogIn className="w-4 h-4 mr-2" />
                 Sign In
               </Button>
-            </a>
+            </SignInButton>
           )}
         </div>
 
@@ -460,12 +461,12 @@ function TenderCard({ tender, isAuthenticated }: { tender: any; isAuthenticated:
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3 mt-4">
-            <a href="/api/login" className="w-full">
+            <SignInButton mode="modal">
               <Button className="w-full" data-testid="button-login-dialog">
                 <LogIn className="w-4 h-4 mr-2" />
-                Sign In with Replit
+                Sign In
               </Button>
-            </a>
+            </SignInButton>
           </div>
         </DialogContent>
       </Dialog>

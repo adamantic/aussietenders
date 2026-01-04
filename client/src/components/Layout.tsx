@@ -1,6 +1,7 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { SignInButton, SignOutButton } from "@clerk/clerk-react";
 import {
   LayoutDashboard,
   Search,
@@ -105,24 +106,26 @@ export function Layout({ children }: LayoutProps) {
                   <p className="text-xs text-slate-400 truncate">{user.email}</p>
                 </div>
               </div>
-              <button
-                onClick={() => logout()}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
-                data-testid="button-logout"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </button>
+              <SignOutButton>
+                <button
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                  data-testid="button-logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </SignOutButton>
             </>
           ) : (
-            <a
-              href="/api/login"
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium bg-primary text-white rounded-lg transition-colors hover:bg-primary/90"
-              data-testid="button-login"
-            >
-              <LogIn className="w-4 h-4" />
-              Sign In with Replit
-            </a>
+            <SignInButton mode="modal">
+              <button
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium bg-primary text-white rounded-lg transition-colors hover:bg-primary/90"
+                data-testid="button-login"
+              >
+                <LogIn className="w-4 h-4" />
+                Sign In
+              </button>
+            </SignInButton>
           )}
         </div>
       </div>

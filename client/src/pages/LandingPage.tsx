@@ -2,13 +2,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Building2, Search, BarChart3 } from "lucide-react";
+import { SignInButton } from "@clerk/clerk-react";
 
 export default function LandingPage() {
   const { user, isLoading } = useAuth();
 
   if (isLoading) return null;
 
-  // Redirect if logged in
   if (user) {
     window.location.href = "/dashboard";
     return null;
@@ -25,10 +25,12 @@ export default function LandingPage() {
           <span className="font-display font-bold text-xl tracking-tight text-slate-900">Aussie Tenders</span>
         </div>
         <div className="flex items-center gap-4">
-          <a href="/api/login" className="text-sm font-medium text-gray-600 hover:text-gray-900">Log In</a>
-          <Button asChild className="rounded-full px-6">
-            <a href="/api/login">Get Started</a>
-          </Button>
+          <SignInButton mode="modal">
+            <button className="text-sm font-medium text-gray-600 hover:text-gray-900" data-testid="button-login">Log In</button>
+          </SignInButton>
+          <SignInButton mode="modal">
+            <Button className="rounded-full px-6" data-testid="button-get-started">Get Started</Button>
+          </SignInButton>
         </div>
       </header>
 
@@ -45,11 +47,11 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
-            <Button size="lg" className="rounded-full text-lg px-8 h-12" asChild>
-              <a href="/api/login">
+            <SignInButton mode="modal">
+              <Button size="lg" className="rounded-full text-lg px-8 h-12" data-testid="button-start-trial">
                 Start Free Trial <ArrowRight className="ml-2 w-5 h-5" />
-              </a>
-            </Button>
+              </Button>
+            </SignInButton>
             <Button size="lg" variant="outline" className="rounded-full text-lg px-8 h-12">
               View Demo
             </Button>

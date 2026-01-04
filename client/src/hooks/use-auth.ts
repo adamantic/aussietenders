@@ -1,48 +1,20 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { User } from "@shared/models/auth";
-
-async function fetchUser(): Promise<User | null> {
-  const response = await fetch("/api/auth/user", {
-    credentials: "include",
-  });
-
-  if (response.status === 401) {
-    return null;
-  }
-
-  if (!response.ok) {
-    throw new Error(`${response.status}: ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-async function logout(): Promise<void> {
-  // Navigate to the logout endpoint which destroys the session and redirects to Replit OIDC logout
-  window.location.replace("/api/logout");
-}
+import { useUser, useClerk } from "@clerk/clerk-react";
 
 export function useAuth() {
-  const queryClient = useQueryClient();
-  const { data: user, isLoading } = useQuery<User | null>({
-    queryKey: ["/api/auth/user"],
-    queryFn: fetchUser,
-    retry: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-
-  const logoutMutation = useMutation({
-    mutationFn: logout,
-    onSuccess: () => {
-      queryClient.setQueryData(["/api/auth/user"], null);
-    },
-  });
+  const { user, isLoaded, isSignedIn } = useUser();
+  const { signOut } = useClerk();
 
   return {
-    user,
-    isLoading,
-    isAuthenticated: !!user,
-    logout: logoutMutation.mutate,
-    isLoggingOut: logoutMutation.isPending,
+    user: isSignedIn ? {
+      id: user.id,
+      email: user.primaryEmailAddress?.emailAddress || "",
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      profileImageUrl: user.imageUrl || "",
+    } : null,
+    isLoading: !isLoaded,
+    isAuthenticated: !!isSignedIn,
+    logout: () => signOut(),
+    isLoggingOut: false,
   };
 }

@@ -1,14 +1,28 @@
 import type { Express } from "express";
+import { getAuth } from "@clerk/express";
 import { authStorage } from "./storage";
-import { isAuthenticated } from "./replitAuth";
+import { isAuthenticated, upsertClerkUser } from "./clerkAuth";
 
-// Register auth-specific routes
 export function registerAuthRoutes(app: Express): void {
-  // Get current authenticated user
   app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await authStorage.getUser(userId);
+      const auth = getAuth(req);
+      if (!auth.userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      let user = await authStorage.getUser(auth.userId);
+      
+      if (!user) {
+        await upsertClerkUser(
+          auth.userId,
+          auth.sessionClaims?.email as string || "",
+          auth.sessionClaims?.firstName as string || "",
+          auth.sessionClaims?.lastName as string || ""
+        );
+        user = await authStorage.getUser(auth.userId);
+      }
+
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);

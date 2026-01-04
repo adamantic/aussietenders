@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { registerChatRoutes } from "./replit_integrations/chat";
+import { getAuth } from "@clerk/express";
 import { z } from "zod";
 import Anthropic from "@anthropic-ai/sdk";
 import { syncAllTenders, testConnections } from "./tender-sources";
@@ -122,16 +123,17 @@ export async function registerRoutes(
 
   // === PIPELINE ROUTES ===
   app.get(api.pipeline.list.path, isAuthenticated, async (req: any, res) => {
-    const items = await storage.getPipelineItems(req.user.claims.sub);
+    const auth = getAuth(req);
+    const items = await storage.getPipelineItems(auth.userId!);
     res.json(items);
   });
 
   app.post(api.pipeline.create.path, isAuthenticated, async (req: any, res) => {
     try {
-      // Force userId from auth
+      const auth = getAuth(req);
       const input = api.pipeline.create.input.parse({
         ...req.body,
-        userId: req.user.claims.sub
+        userId: auth.userId!
       });
       const item = await storage.createPipelineItem(input);
       res.status(201).json(item);
@@ -145,8 +147,9 @@ export async function registerRoutes(
 
   app.patch(api.pipeline.update.path, isAuthenticated, async (req: any, res) => {
     try {
+      const auth = getAuth(req);
       const input = api.pipeline.update.input.parse(req.body);
-      const updated = await storage.updatePipelineItem(Number(req.params.id), req.user.claims.sub, input);
+      const updated = await storage.updatePipelineItem(Number(req.params.id), auth.userId!, input);
       if (!updated) return res.status(404).json({ message: "Item not found" });
       res.json(updated);
     } catch (err) {
@@ -155,22 +158,25 @@ export async function registerRoutes(
   });
 
   app.delete(api.pipeline.delete.path, isAuthenticated, async (req: any, res) => {
-    await storage.deletePipelineItem(Number(req.params.id), req.user.claims.sub);
+    const auth = getAuth(req);
+    await storage.deletePipelineItem(Number(req.params.id), auth.userId!);
     res.status(204).send();
   });
 
   // === COMPANY ROUTES ===
   app.get(api.company.get.path, isAuthenticated, async (req: any, res) => {
-    const company = await storage.getCompany(req.user.claims.sub);
+    const auth = getAuth(req);
+    const company = await storage.getCompany(auth.userId!);
     if (!company) return res.status(404).json({ message: "Profile not found" });
     res.json(company);
   });
 
   app.post(api.company.upsert.path, isAuthenticated, async (req: any, res) => {
     try {
+      const auth = getAuth(req);
       const input = api.company.upsert.input.parse({
         ...req.body,
-        userId: req.user.claims.sub
+        userId: auth.userId!
       });
       const company = await storage.upsertCompany(input);
       res.json(company);
