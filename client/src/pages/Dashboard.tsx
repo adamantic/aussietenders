@@ -25,7 +25,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useSummarizeTender } from "@/hooks/use-tenders";
-import { Plus, Search, Filter, Loader2, Sparkles, LogIn, Building2 } from "lucide-react";
+import { Plus, Search, Filter, Loader2, Sparkles, LogIn, Building2, ArrowUpDown, Download, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Link } from "wouter";
@@ -35,6 +35,7 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("publishDate");
   const [page, setPage] = useState(1);
 
   const { data: categories = [] } = useQuery<string[]>({
@@ -46,10 +47,25 @@ export default function Dashboard() {
     },
   });
 
+  const getSortOrder = () => {
+    switch (sortBy) {
+      case "closeDate":
+      case "agency":
+      case "location":
+        return "asc";
+      case "value":
+      case "publishDate":
+      default:
+        return "desc";
+    }
+  };
+
   const { data: tendersData, isLoading } = useTenders({
     search: searchTerm,
     category: category === "all" ? undefined : category,
     sources: ["AusTender"],
+    sortBy: sortBy as any,
+    sortOrder: getSortOrder(),
     page,
     limit: 12,
   });
@@ -78,8 +94,8 @@ export default function Dashboard() {
         </div>
 
         {/* Search and Category Filters */}
-        <div className="flex flex-col md:flex-row gap-4 items-center">
-          <div className="relative flex-1 w-full">
+        <div className="flex flex-col md:flex-row gap-4 items-center flex-wrap">
+          <div className="relative flex-1 w-full md:min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               placeholder="Search by keyword, agency, or description..."
@@ -90,7 +106,7 @@ export default function Dashboard() {
             />
           </div>
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-full md:w-[200px]" data-testid="select-category">
+            <SelectTrigger className="w-full md:w-[180px]" data-testid="select-category">
               <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
               <SelectValue placeholder="Tender Type" />
             </SelectTrigger>
@@ -101,12 +117,61 @@ export default function Dashboard() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-full md:w-[180px]" data-testid="select-sort">
+              <ArrowUpDown className="w-4 h-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="publishDate">Newest First</SelectItem>
+              <SelectItem value="closeDate">Closing Soon</SelectItem>
+              <SelectItem value="value">Highest Value</SelectItem>
+              <SelectItem value="agency">Agency A-Z</SelectItem>
+              <SelectItem value="location">Location A-Z</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Results Summary */}
+        {/* Results Summary and Export */}
         {tendersData && (
-          <div className="text-sm text-muted-foreground">
-            Showing {tendersData.data.length} of {tendersData.total} tenders
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {tendersData.data.length} of {tendersData.total} tenders
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  if (searchTerm) params.append("search", searchTerm);
+                  if (category !== "all") params.append("category", category);
+                  if (sortBy) params.append("sortBy", sortBy);
+                  params.append("sources", "AusTender");
+                  window.location.href = `/api/export/csv?${params.toString()}`;
+                }}
+                data-testid="button-export-csv"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  if (searchTerm) params.append("search", searchTerm);
+                  if (category !== "all") params.append("category", category);
+                  if (sortBy) params.append("sortBy", sortBy);
+                  params.append("sources", "AusTender");
+                  window.open(`/api/export/pdf?${params.toString()}`, "_blank");
+                }}
+                data-testid="button-export-pdf"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Export PDF
+              </Button>
+            </div>
           </div>
         )}
 

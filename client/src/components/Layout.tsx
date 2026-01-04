@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -9,7 +9,9 @@ import {
   LogOut,
   LogIn,
   Bell,
-  UserCircle
+  UserCircle,
+  Menu,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +22,7 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -28,17 +31,40 @@ export function Layout({ children }: LayoutProps) {
     { name: "My Company", href: "/company", icon: Building2 },
   ];
 
+  const handleNavClick = () => {
+    setMobileMenuOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      {/* Mobile menu overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className="w-64 bg-slate-900 text-white flex flex-col fixed h-full z-10 shadow-xl">
-        <div className="p-6 border-b border-white/10">
-          <Link href="/dashboard" className="flex items-center gap-2 cursor-pointer">
+      <div className={cn(
+        "w-64 bg-slate-900 text-white flex flex-col fixed h-full z-50 shadow-xl transition-transform duration-300",
+        "lg:translate-x-0",
+        mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+          <Link href="/dashboard" className="flex items-center gap-2 cursor-pointer" onClick={handleNavClick}>
             <div className="bg-primary p-1.5 rounded-lg">
               <Building2 className="w-6 h-6 text-white" />
             </div>
             <span className="font-display font-bold text-xl tracking-tight">Aussie Tenders</span>
           </Link>
+          <button 
+            className="lg:hidden p-1 text-slate-400 hover:text-white"
+            onClick={() => setMobileMenuOpen(false)}
+            data-testid="button-close-menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         <nav className="flex-1 px-3 py-6 space-y-1">
@@ -48,6 +74,7 @@ export function Layout({ children }: LayoutProps) {
               <Link
                 key={item.name}
                 href={item.href}
+                onClick={handleNavClick}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                   isActive
@@ -101,18 +128,27 @@ export function Layout({ children }: LayoutProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 ml-64 flex flex-col min-h-screen">
-        <header className="h-16 bg-white border-b border-border sticky top-0 z-10 flex items-center justify-between px-8 shadow-sm">
-          <h1 className="text-lg font-semibold text-gray-900">
-            {navigation.find((n) => n.href === location)?.name || "Aussie Tenders"}
-          </h1>
+      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+        <header className="h-16 bg-white border-b border-border sticky top-0 z-30 flex items-center justify-between px-4 lg:px-8 shadow-sm">
+          <div className="flex items-center gap-3">
+            <button 
+              className="lg:hidden p-2 text-gray-500 hover:text-primary transition-colors"
+              onClick={() => setMobileMenuOpen(true)}
+              data-testid="button-open-menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg font-semibold text-gray-900">
+              {navigation.find((n) => n.href === location)?.name || "Aussie Tenders"}
+            </h1>
+          </div>
           <button className="relative p-2 text-gray-500 hover:text-primary transition-colors">
             <Bell className="w-5 h-5" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
           </button>
         </header>
 
-        <main className="flex-1 p-8">
+        <main className="flex-1 p-4 lg:p-8">
           <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
             {children}
           </div>

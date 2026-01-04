@@ -22,7 +22,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { useSummarizeTender } from "@/hooks/use-tenders";
-import { Plus, Search, Filter, Loader2, Sparkles, LogIn, Building2 } from "lucide-react";
+import { Plus, Search, Filter, Loader2, Sparkles, LogIn, Building2, ArrowUpDown, Download, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -30,11 +30,27 @@ export default function SearchPage() {
   const { isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("publishDate");
   const [page, setPage] = useState(1);
+
+  const getSortOrder = () => {
+    switch (sortBy) {
+      case "closeDate":
+      case "agency":
+      case "location":
+        return "asc";
+      case "value":
+      case "publishDate":
+      default:
+        return "desc";
+    }
+  };
 
   const { data: tendersData, isLoading } = useTenders({
     search: searchTerm,
     category: category === "all" ? undefined : category,
+    sortBy: sortBy as any,
+    sortOrder: getSortOrder(),
     page,
     limit: 10
   });
@@ -50,18 +66,19 @@ export default function SearchPage() {
         </div>
 
         {/* Filters Bar */}
-        <div className="glass-panel p-4 rounded-xl flex flex-col md:flex-row gap-4 items-center">
-          <div className="relative flex-1 w-full">
+        <div className="glass-panel p-4 rounded-xl flex flex-col md:flex-row gap-4 items-center flex-wrap">
+          <div className="relative flex-1 w-full md:min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               placeholder="Search by keyword, agency, or ID..."
               className="pl-10 bg-white/50 border-gray-200 focus:bg-white transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              data-testid="input-search"
             />
           </div>
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-full md:w-[200px] bg-white/50">
+            <SelectTrigger className="w-full md:w-[180px] bg-white/50" data-testid="select-category">
               <Filter className="w-4 h-4 mr-2 text-gray-400" />
               <SelectValue placeholder="Category" />
             </SelectTrigger>
@@ -73,7 +90,61 @@ export default function SearchPage() {
               <SelectItem value="Consulting">Consulting</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-full md:w-[180px] bg-white/50" data-testid="select-sort">
+              <ArrowUpDown className="w-4 h-4 mr-2 text-gray-400" />
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="publishDate">Newest First</SelectItem>
+              <SelectItem value="closeDate">Closing Soon</SelectItem>
+              <SelectItem value="value">Highest Value</SelectItem>
+              <SelectItem value="agency">Agency A-Z</SelectItem>
+              <SelectItem value="location">Location A-Z</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
+        {/* Results Summary and Export */}
+        {tendersData && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {tendersData.data.length} of {tendersData.total} tenders
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  if (searchTerm) params.append("search", searchTerm);
+                  if (category !== "all") params.append("category", category);
+                  if (sortBy) params.append("sortBy", sortBy);
+                  window.location.href = `/api/export/csv?${params.toString()}`;
+                }}
+                data-testid="button-export-csv"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  if (searchTerm) params.append("search", searchTerm);
+                  if (category !== "all") params.append("category", category);
+                  if (sortBy) params.append("sortBy", sortBy);
+                  window.open(`/api/export/pdf?${params.toString()}`, "_blank");
+                }}
+                data-testid="button-export-pdf"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Export PDF
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Results List */}
         <div className="space-y-4">

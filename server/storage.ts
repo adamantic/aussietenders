@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq, like, and, desc, sql } from "drizzle-orm";
+import { eq, like, and, desc, asc, sql } from "drizzle-orm";
 import {
   tenders, companies, pipelineItems, savedSearches,
   type Tender, type InsertTender,
@@ -10,7 +10,7 @@ import {
 
 export interface IStorage {
   // Tenders
-  getTenders(params: { search?: string, category?: string, source?: string, sources?: string[], page?: number, limit?: number }): Promise<{ data: Tender[], total: number }>;
+  getTenders(params: { search?: string, category?: string, source?: string, sources?: string[], sortBy?: string, sortOrder?: string, page?: number, limit?: number }): Promise<{ data: Tender[], total: number }>;
   getTender(id: number): Promise<Tender | undefined>;
   getTenderByExternalId(externalId: string): Promise<Tender | undefined>;
   getDistinctCategories(): Promise<string[]>;
@@ -38,7 +38,7 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   // === TENDERS ===
-  async getTenders({ search, category, source, sources, page = 1, limit = 20 }: { search?: string, category?: string, source?: string, sources?: string[], page?: number, limit?: number }) {
+  async getTenders({ search, category, source, sources, sortBy, sortOrder = 'desc', page = 1, limit = 20 }: { search?: string, category?: string, source?: string, sources?: string[], sortBy?: string, sortOrder?: string, page?: number, limit?: number }) {
     const offset = (page - 1) * limit;
     
     // Build where clause
@@ -62,6 +62,27 @@ export class DatabaseStorage implements IStorage {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
+    // Build sort clause
+    const sortFn = sortOrder === 'asc' ? asc : desc;
+    let orderByClause;
+    switch (sortBy) {
+      case 'closeDate':
+        orderByClause = sortFn(tenders.closeDate);
+        break;
+      case 'value':
+        orderByClause = sortFn(tenders.value);
+        break;
+      case 'location':
+        orderByClause = sortFn(tenders.location);
+        break;
+      case 'agency':
+        orderByClause = sortFn(tenders.agency);
+        break;
+      case 'publishDate':
+      default:
+        orderByClause = desc(tenders.publishDate);
+    }
+
     const [countResult] = await db
       .select({ count: sql<number>`cast(count(*) as int)` })
       .from(tenders)
@@ -73,7 +94,7 @@ export class DatabaseStorage implements IStorage {
       .where(whereClause)
       .limit(limit)
       .offset(offset)
-      .orderBy(desc(tenders.publishDate));
+      .orderBy(orderByClause);
 
     return { data, total: countResult.count };
   }

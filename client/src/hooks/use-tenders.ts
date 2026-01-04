@@ -6,6 +6,8 @@ interface TenderSearchParams {
   category?: string;
   source?: string;
   sources?: string[]; // Array of sources to filter by
+  sortBy?: 'closeDate' | 'value' | 'location' | 'agency' | 'publishDate';
+  sortOrder?: 'asc' | 'desc';
   page?: number;
   limit?: number;
 }
@@ -26,6 +28,8 @@ export function useTenders(params: TenderSearchParams = {}) {
       if (params.sources && params.sources.length > 0) {
         url.searchParams.append("sources", params.sources.join(","));
       }
+      if (params.sortBy) url.searchParams.append("sortBy", params.sortBy);
+      if (params.sortOrder) url.searchParams.append("sortOrder", params.sortOrder);
       if (params.page) url.searchParams.append("page", params.page.toString());
       if (params.limit) url.searchParams.append("limit", params.limit.toString());
 

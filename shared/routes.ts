@@ -25,6 +25,8 @@ export const api = {
         category: z.string().optional(),
         source: z.string().optional(),
         sources: z.string().optional(), // Comma-separated list of sources
+        sortBy: z.enum(['closeDate', 'value', 'location', 'agency', 'publishDate']).optional(),
+        sortOrder: z.enum(['asc', 'desc']).optional(),
         page: z.coerce.number().optional(),
         limit: z.coerce.number().optional(),
       }).optional(),

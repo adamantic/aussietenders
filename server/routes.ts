@@ -8,6 +8,15 @@ import { z } from "zod";
 import Anthropic from "@anthropic-ai/sdk";
 import { syncAllTenders, testConnections } from "./tender-sources";
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -25,7 +34,12 @@ export async function registerRoutes(
       const params = api.tenders.list.input?.parse(req.query) || {};
       // Parse sources from comma-separated string to array
       const sources = params.sources ? params.sources.split(',').filter(Boolean) : undefined;
-      const result = await storage.getTenders({ ...params, sources });
+      const result = await storage.getTenders({ 
+        ...params, 
+        sources,
+        sortBy: params.sortBy,
+        sortOrder: params.sortOrder
+      });
       res.json({
         data: result.data,
         total: result.total,
@@ -187,6 +201,119 @@ export async function registerRoutes(
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to check status" });
+    }
+  });
+
+  // === EXPORT ROUTES ===
+  app.get("/api/export/csv", async (req, res) => {
+    try {
+      const params = api.tenders.list.input?.parse(req.query) || {};
+      const sources = params.sources ? params.sources.split(',').filter(Boolean) : undefined;
+      const result = await storage.getTenders({ 
+        ...params, 
+        sources,
+        sortBy: params.sortBy,
+        sortOrder: params.sortOrder,
+        limit: 1000  // Export up to 1000 tenders
+      });
+      
+      // Build CSV
+      const headers = ["ID", "Title", "Agency", "Value", "Location", "Status", "Close Date", "Categories", "Source"];
+      const rows = result.data.map(t => [
+        t.externalId,
+        `"${(t.title || "").replace(/"/g, '""')}"`,
+        `"${(t.agency || "").replace(/"/g, '""')}"`,
+        t.value || "",
+        `"${(t.location || "").replace(/"/g, '""')}"`,
+        t.status || "",
+        t.closeDate ? new Date(t.closeDate).toISOString().split('T')[0] : "",
+        `"${((t.aiCategories || t.categories) as string[] || []).join(", ")}"`,
+        t.source || ""
+      ].join(","));
+      
+      const csv = [headers.join(","), ...rows].join("\n");
+      
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename="tenders-${new Date().toISOString().split('T')[0]}.csv"`);
+      res.send(csv);
+    } catch (error) {
+      console.error("CSV export error:", error);
+      res.status(500).json({ message: "Failed to export CSV" });
+    }
+  });
+
+  app.get("/api/export/pdf", async (req, res) => {
+    try {
+      const params = api.tenders.list.input?.parse(req.query) || {};
+      const sources = params.sources ? params.sources.split(',').filter(Boolean) : undefined;
+      const result = await storage.getTenders({ 
+        ...params, 
+        sources,
+        sortBy: params.sortBy,
+        sortOrder: params.sortOrder,
+        limit: 100  // Limit PDF to 100 tenders for readability
+      });
+      
+      // Build printable HTML page
+      const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Aussie Tenders Export - ${new Date().toLocaleDateString()}</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+    h1 { color: #1e40af; border-bottom: 2px solid #1e40af; padding-bottom: 10px; }
+    .meta { color: #666; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th { background: #1e40af; color: white; padding: 12px 8px; text-align: left; font-size: 12px; }
+    td { border-bottom: 1px solid #ddd; padding: 10px 8px; font-size: 11px; vertical-align: top; }
+    tr:nth-child(even) { background: #f9fafb; }
+    .title { font-weight: bold; color: #111; }
+    .value { color: #059669; font-weight: bold; }
+    .status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; }
+    .status-open { background: #dcfce7; color: #166534; }
+    .status-closed { background: #fee2e2; color: #991b1b; }
+    @media print { body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <h1>Aussie Tenders Export</h1>
+  <p class="meta">Generated on ${new Date().toLocaleString()} | ${result.data.length} tenders</p>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 30%">Tender</th>
+        <th style="width: 20%">Agency</th>
+        <th style="width: 12%">Value</th>
+        <th style="width: 12%">Location</th>
+        <th style="width: 12%">Close Date</th>
+        <th style="width: 14%">Categories</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${result.data.map(t => `
+        <tr>
+          <td>
+            <div class="title">${escapeHtml(t.title || "")}</div>
+            <div style="color: #666; font-size: 10px;">${t.externalId}</div>
+          </td>
+          <td>${escapeHtml(t.agency || "")}</td>
+          <td class="value">${t.value ? "$" + Number(t.value).toLocaleString() : "-"}</td>
+          <td>${escapeHtml(t.location || "Australia")}</td>
+          <td>${t.closeDate ? new Date(t.closeDate).toLocaleDateString() : "-"}</td>
+          <td>${((t.aiCategories || t.categories) as string[] || []).slice(0, 2).join(", ")}</td>
+        </tr>
+      `).join("")}
+    </tbody>
+  </table>
+  <script>window.print();</script>
+</body>
+</html>`;
+      
+      res.setHeader("Content-Type", "text/html");
+      res.send(html);
+    } catch (error) {
+      console.error("PDF export error:", error);
+      res.status(500).json({ message: "Failed to export PDF" });
     }
   });
 
