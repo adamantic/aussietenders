@@ -52,13 +52,11 @@ npm run dev
 
 The platform automatically syncs approximately 100 federal tenders on startup.
 
-### NSW eTendering - Optional
-- **Status**: Requires API registration (not active by default)
-- **To enable**: 
-  1. Register at https://api.nsw.gov.au
-  2. Create an application and obtain OAuth credentials
-  3. Add `NSW_API_KEY` to your environment variables
-- **Note**: Without the API key, the platform operates with AusTender data only
+### NSW eTendering - Currently Unavailable
+- **Status**: The NSW API blocks requests from cloud server environments
+- **Issue**: NSW eTendering uses aggressive bot protection (WAF) that returns empty responses for server-side requests
+- **Workaround needed**: May require a proxy service or scheduled job running from a different environment
+- **Note**: The platform operates with AusTender (Federal) data which provides real government tender opportunities
 
 ## Admin Endpoints
 

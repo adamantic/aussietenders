@@ -26,23 +26,14 @@ interface NSWTenderSearchResponse {
 export async function fetchNSWTenders(): Promise<InsertTender[]> {
   const tenders: InsertTender[] = [];
 
-  const apiKey = process.env.NSW_API_KEY;
-  if (!apiKey) {
-    console.log("[NSW eTendering] Skipping - NSW_API_KEY not configured");
-    console.log("[NSW eTendering] Register at https://api.nsw.gov.au to obtain API credentials");
-    return tenders;
-  }
-
   try {
-    const url = "https://api.nsw.gov.au/tenders/v1/tenders?status=published";
-
+    const url = "https://www.tenders.nsw.gov.au/?event=public.api.tender.search&ResultsPerPage=100";
     console.log(`[NSW eTendering] Fetching tenders from: ${url}`);
 
     const response = await fetch(url, {
       headers: {
-        Accept: "application/json",
-        "User-Agent": "GovTenderPro/1.0 (Government Tender Aggregator)",
-        "Authorization": `Bearer ${apiKey}`,
+        "Accept": "application/json, text/plain, */*",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       },
       redirect: "follow",
     });
@@ -52,7 +43,28 @@ export async function fetchNSWTenders(): Promise<InsertTender[]> {
       return tenders;
     }
 
-    const data: NSWTenderSearchResponse = await response.json();
+    const contentType = response.headers.get("content-type") || "";
+    const text = await response.text();
+    
+    if (!text || text.trim().length === 0) {
+      console.log("[NSW eTendering] Empty response received");
+      return tenders;
+    }
+
+    if (!contentType.includes("application/json")) {
+      console.log(`[NSW eTendering] Non-JSON response: ${contentType}`);
+      console.log(`[NSW eTendering] Response preview: ${text.slice(0, 200)}`);
+      return tenders;
+    }
+
+    let data: NSWTenderSearchResponse;
+    try {
+      data = JSON.parse(text);
+    } catch (parseErr) {
+      console.error("[NSW eTendering] Failed to parse JSON:", parseErr);
+      console.log(`[NSW eTendering] Response preview: ${text.slice(0, 200)}`);
+      return tenders;
+    }
 
     const tenderList = data.rfts || data.rft || [];
 
@@ -140,24 +152,21 @@ function mapNSWToTender(nswTender: NSWTender): InsertTender | null {
 }
 
 export async function testNSWConnection(): Promise<boolean> {
-  const apiKey = process.env.NSW_API_KEY;
-  if (!apiKey) {
-    return false;
-  }
-
   try {
-    const url = "https://api.nsw.gov.au/tenders/v1/tenders?status=published&limit=1";
+    const url = "https://www.tenders.nsw.gov.au/?event=public.api.tender.search&ResultsPerPage=1";
 
     const response = await fetch(url, {
       headers: {
-        Accept: "application/json",
-        "User-Agent": "GovTenderPro/1.0 (Government Tender Aggregator)",
-        "Authorization": `Bearer ${apiKey}`,
+        "Accept": "application/json, text/plain, */*",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       },
       redirect: "follow",
     });
 
-    return response.ok;
+    if (!response.ok) return false;
+    
+    const text = await response.text();
+    return text.length > 0;
   } catch {
     return false;
   }

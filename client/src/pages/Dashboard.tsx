@@ -7,7 +7,6 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -81,29 +80,27 @@ export default function Dashboard() {
         </div>
 
         {/* Source Filter Bar */}
-        <div className="flex flex-wrap items-center gap-4 p-4 bg-card rounded-xl border">
+        <div className="flex flex-wrap items-center gap-3 p-4 bg-card rounded-xl border">
           <span className="text-sm font-medium text-muted-foreground">Sources:</span>
           <div className="flex items-center gap-2">
-            <Checkbox
-              id="source-austender"
-              checked={showAusTender}
-              onCheckedChange={(checked) => setShowAusTender(checked === true)}
-              data-testid="checkbox-source-austender"
-            />
-            <label htmlFor="source-austender" className="text-sm cursor-pointer">
+            <Button
+              variant={showAusTender ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowAusTender(!showAusTender)}
+              className="toggle-elevate"
+              data-testid="button-source-austender"
+            >
               AusTender (Federal)
-            </label>
-          </div>
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="source-nsw"
-              checked={showNSW}
-              onCheckedChange={(checked) => setShowNSW(checked === true)}
-              data-testid="checkbox-source-nsw"
-            />
-            <label htmlFor="source-nsw" className="text-sm cursor-pointer">
+            </Button>
+            <Button
+              variant={showNSW ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowNSW(!showNSW)}
+              className="toggle-elevate"
+              data-testid="button-source-nsw"
+            >
               NSW eTendering
-            </label>
+            </Button>
           </div>
         </div>
 
