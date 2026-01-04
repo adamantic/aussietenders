@@ -12,7 +12,10 @@ export interface IStorage {
   // Tenders
   getTenders(params: { search?: string, category?: string, source?: string, sources?: string[], page?: number, limit?: number }): Promise<{ data: Tender[], total: number }>;
   getTender(id: number): Promise<Tender | undefined>;
+  getTenderByExternalId(externalId: string): Promise<Tender | undefined>;
   createTender(tender: InsertTender): Promise<Tender>;
+  updateTender(id: number, tender: Partial<InsertTender>): Promise<Tender | undefined>;
+  clearTenders(): Promise<void>;
   
   // Pipeline
   getPipelineItems(userId: string): Promise<PipelineItemWithTender[]>;
@@ -77,9 +80,32 @@ export class DatabaseStorage implements IStorage {
     return tender;
   }
 
+  async getTenderByExternalId(externalId: string): Promise<Tender | undefined> {
+    const [tender] = await db.select().from(tenders).where(eq(tenders.externalId, externalId));
+    return tender;
+  }
+
   async createTender(tender: InsertTender): Promise<Tender> {
     const [newItem] = await db.insert(tenders).values(tender).returning();
     return newItem;
+  }
+
+  async updateTender(id: number, updates: Partial<InsertTender>): Promise<Tender | undefined> {
+    const [updated] = await db
+      .update(tenders)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(tenders.id, id))
+      .returning();
+    return updated;
+  }
+
+  async clearTenders(): Promise<void> {
+    const pipelineCount = await db.select({ count: sql<number>`count(*)::int` }).from(pipelineItems);
+    if (pipelineCount[0]?.count > 0) {
+      console.log("[Storage] Skipping tender clear - pipeline items exist");
+      return;
+    }
+    await db.delete(tenders);
   }
 
   // === PIPELINE ===

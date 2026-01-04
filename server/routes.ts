@@ -6,6 +6,7 @@ import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integra
 import { registerChatRoutes } from "./replit_integrations/chat";
 import { z } from "zod";
 import Anthropic from "@anthropic-ai/sdk";
+import { syncAllTenders, testConnections } from "./tender-sources";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -77,8 +78,7 @@ export async function registerRoutes(
       const contentBlock = message.content[0];
       const summary = contentBlock.type === 'text' ? contentBlock.text : "Unable to generate summary";
 
-      // Ideally update the tender with cached summary - skipped for now as updateTender not in IStorage MVP
-      // await storage.updateTender(tenderId, { aiSummary: summary });
+      await storage.updateTender(tenderId, { aiSummary: summary });
 
       res.json({ summary });
     } catch (error) {
@@ -146,237 +146,51 @@ export async function registerRoutes(
     }
   });
 
-  // Seed data on startup
-  seedDatabase();
+  // === TENDER SYNC ROUTES (Admin, requires authentication) ===
+  app.post("/api/admin/sync-tenders", isAuthenticated, async (req, res) => {
+    try {
+      console.log("[TenderSync] Manual sync triggered");
+      const results = await syncAllTenders();
+      res.json({ success: true, results });
+    } catch (error) {
+      console.error("[TenderSync] Sync failed:", error);
+      res.status(500).json({ success: false, message: "Sync failed" });
+    }
+  });
+
+  app.get("/api/admin/sync-status", isAuthenticated, async (req, res) => {
+    try {
+      const connections = await testConnections();
+      const tenderCounts = await storage.getTenders({ limit: 1 });
+      res.json({
+        connections,
+        totalTenders: tenderCounts.total,
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to check status" });
+    }
+  });
+
+  // Sync tenders on startup (clear sample data and fetch real data)
+  initializeTenders();
 
   return httpServer;
 }
 
-async function seedDatabase() {
-  const existing = await storage.getTenders({ limit: 1 });
-  if (existing.total === 0) {
-    const sampleTenders = [
-      {
-        title: "Digital Transformation Services Panel",
-        agency: "Department of Customer Service",
-        description: "Seeking qualified providers for a whole-of-government digital services panel covering UX design, software engineering, and cloud architecture.",
-        source: "NSW eTendering",
-        status: "Open",
-        value: "5000000.00",
-        publishDate: new Date(),
-        closeDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-        location: "Sydney, NSW",
-        categories: ["IT Services", "Consulting"],
-      },
-      {
-        title: "Facilities Management for Western Sydney Schools",
-        agency: "Department of Education",
-        description: "Comprehensive facilities management including cleaning, waste management, and grounds maintenance for 15 schools in Western Sydney region.",
-        source: "NSW eTendering",
-        status: "Open",
-        value: "1200000.00",
-        publishDate: new Date(),
-        closeDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000),
-        location: "Western Sydney, NSW",
-        categories: ["Facilities Management", "Cleaning"],
-      },
-      {
-        title: "Cyber Security Audit and Compliance Review",
-        agency: "Australian Taxation Office",
-        description: "Independent audit of security controls and compliance with ISM frameworks for new payment gateway infrastructure.",
-        source: "AusTender",
-        status: "Open",
-        value: "150000.00",
-        publishDate: new Date(),
-        closeDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        location: "Canberra, ACT",
-        categories: ["IT Services", "Consulting"],
-      },
-      {
-        title: "Road Maintenance Contract - Parramatta Region",
-        agency: "Transport for NSW",
-        description: "Annual contract for road maintenance, pothole repair, line marking, and signage replacement across the Parramatta local government area.",
-        source: "NSW eTendering",
-        status: "Open",
-        value: "2800000.00",
-        publishDate: new Date(),
-        closeDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
-        location: "Parramatta, NSW",
-        categories: ["Construction", "Infrastructure"],
-      },
-      {
-        title: "Healthcare IT Systems Integration",
-        agency: "Department of Health",
-        description: "Integration of patient management systems across 12 regional hospitals, including data migration and staff training programs.",
-        source: "AusTender",
-        status: "Open",
-        value: "3200000.00",
-        publishDate: new Date(),
-        closeDate: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000),
-        location: "National",
-        categories: ["IT Services", "Health"],
-      },
-      {
-        title: "Office Furniture Supply Contract",
-        agency: "Department of Finance",
-        description: "Supply of ergonomic office furniture including standing desks, chairs, and collaborative workspace solutions for new government office fit-out.",
-        source: "AusTender",
-        status: "Open",
-        value: "450000.00",
-        publishDate: new Date(),
-        closeDate: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000),
-        location: "Canberra, ACT",
-        categories: ["Supplies", "Furniture"],
-      },
-      {
-        title: "Environmental Impact Assessment - Hunter Valley",
-        agency: "NSW Environment Protection Authority",
-        description: "Comprehensive environmental impact assessment for proposed industrial development including air quality, water, and biodiversity studies.",
-        source: "NSW eTendering",
-        status: "Open",
-        value: "280000.00",
-        publishDate: new Date(),
-        closeDate: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
-        location: "Hunter Valley, NSW",
-        categories: ["Consulting", "Environmental"],
-      },
-      {
-        title: "Fleet Vehicle Leasing Program",
-        agency: "Department of Defence",
-        description: "Long-term leasing arrangement for 200+ light and medium vehicles including maintenance, fuel cards, and telematics systems.",
-        source: "AusTender",
-        status: "Open",
-        value: "8500000.00",
-        publishDate: new Date(),
-        closeDate: new Date(Date.now() + 35 * 24 * 60 * 60 * 1000),
-        location: "National",
-        categories: ["Supplies", "Transport"],
-      },
-      {
-        title: "School Building Upgrades - Northern Beaches",
-        agency: "NSW Department of Education",
-        description: "Major building upgrades for 8 primary schools including new HVAC systems, roof replacement, and accessibility improvements.",
-        source: "NSW eTendering",
-        status: "Open",
-        value: "4200000.00",
-        publishDate: new Date(),
-        closeDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        location: "Northern Beaches, NSW",
-        categories: ["Construction", "Building"],
-      },
-      {
-        title: "Legal Services Panel - Commercial Law",
-        agency: "Attorney-General's Department",
-        description: "Establishment of a panel of legal service providers for commercial law advice including contracts, procurement, and intellectual property matters.",
-        source: "AusTender",
-        status: "Open",
-        value: "1500000.00",
-        publishDate: new Date(),
-        closeDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000),
-        location: "National",
-        categories: ["Consulting", "Legal"],
-      },
-      {
-        title: "Telecommunications Infrastructure Upgrade",
-        agency: "Service NSW",
-        description: "Upgrade of telecommunications infrastructure across 150 service centers including fiber optic installation and network equipment.",
-        source: "NSW eTendering",
-        status: "Open",
-        value: "6700000.00",
-        publishDate: new Date(),
-        closeDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
-        location: "NSW State-wide",
-        categories: ["IT Services", "Infrastructure"],
-      },
-      {
-        title: "Catering Services - Parliament House",
-        agency: "Department of Parliamentary Services",
-        description: "Provision of catering services for Parliament House including dining rooms, functions, and daily refreshments for staff and visitors.",
-        source: "AusTender",
-        status: "Open",
-        value: "950000.00",
-        publishDate: new Date(),
-        closeDate: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000),
-        location: "Canberra, ACT",
-        categories: ["Services", "Hospitality"],
-      },
-      {
-        title: "Mental Health Program Delivery",
-        agency: "NSW Health",
-        description: "Delivery of community mental health programs across Greater Sydney including counseling, crisis intervention, and peer support services.",
-        source: "NSW eTendering",
-        status: "Open",
-        value: "2100000.00",
-        publishDate: new Date(),
-        closeDate: new Date(Date.now() + 22 * 24 * 60 * 60 * 1000),
-        location: "Greater Sydney, NSW",
-        categories: ["Health", "Services"],
-      },
-      {
-        title: "Cloud Migration Services",
-        agency: "Australian Bureau of Statistics",
-        description: "Migration of legacy data systems to cloud infrastructure including security assessment, data transfer, and ongoing managed services.",
-        source: "AusTender",
-        status: "Open",
-        value: "1800000.00",
-        publishDate: new Date(),
-        closeDate: new Date(Date.now() + 16 * 24 * 60 * 60 * 1000),
-        location: "Canberra, ACT",
-        categories: ["IT Services", "Cloud"],
-      },
-      {
-        title: "Waste Management Services - CBD",
-        agency: "City of Sydney Council",
-        description: "Commercial and residential waste collection, recycling, and disposal services for Sydney CBD and surrounding suburbs.",
-        source: "NSW eTendering",
-        status: "Open",
-        value: "3800000.00",
-        publishDate: new Date(),
-        closeDate: new Date(Date.now() + 40 * 24 * 60 * 60 * 1000),
-        location: "Sydney CBD, NSW",
-        categories: ["Services", "Environmental"],
-      },
-      {
-        title: "Training and Development Program",
-        agency: "Australian Public Service Commission",
-        description: "Design and delivery of leadership development programs for senior executives including workshops, coaching, and assessment centers.",
-        source: "AusTender",
-        status: "Open",
-        value: "520000.00",
-        publishDate: new Date(),
-        closeDate: new Date(Date.now() + 19 * 24 * 60 * 60 * 1000),
-        location: "National",
-        categories: ["Consulting", "Training"],
-      },
-      {
-        title: "Bridge Inspection and Maintenance",
-        agency: "Roads and Maritime Services",
-        description: "Structural inspection and preventative maintenance for 45 bridges across the Central Coast region including underwater assessments.",
-        source: "NSW eTendering",
-        status: "Closed",
-        value: "1100000.00",
-        publishDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-        closeDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        location: "Central Coast, NSW",
-        categories: ["Construction", "Infrastructure"],
-      },
-      {
-        title: "Accounting Software Implementation",
-        agency: "Department of Treasury",
-        description: "Implementation of new government-wide accounting software including customization, integration with existing systems, and user training.",
-        source: "AusTender",
-        status: "Closed",
-        value: "2400000.00",
-        publishDate: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000),
-        closeDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-        location: "National",
-        categories: ["IT Services", "Finance"],
-      },
-    ];
-
-    for (const t of sampleTenders) {
-      await storage.createTender(t as any);
-    }
-    console.log("Seeded database with sample tenders");
+async function initializeTenders() {
+  try {
+    console.log("[TenderSync] Initializing tender data from government APIs...");
+    
+    // Clear existing sample data
+    await storage.clearTenders();
+    console.log("[TenderSync] Cleared existing tender data");
+    
+    // Sync from real APIs
+    const results = await syncAllTenders();
+    
+    const totalAdded = results.reduce((sum, r) => sum + r.added, 0);
+    console.log(`[TenderSync] Initial sync complete: ${totalAdded} tenders imported`);
+  } catch (error) {
+    console.error("[TenderSync] Initial sync failed:", error);
   }
 }

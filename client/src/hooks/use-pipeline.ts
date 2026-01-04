@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import { type InsertPipelineItem, type PipelineItem } from "@shared/schema";
 
+type CreatePipelineInput = Omit<InsertPipelineItem, "userId">;
+
 // GET /api/pipeline
 export function usePipeline() {
   return useQuery({
@@ -19,7 +21,7 @@ export function useAddToPipeline() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: InsertPipelineItem) => {
+    mutationFn: async (data: CreatePipelineInput) => {
       const res = await fetch(api.pipeline.create.path, {
         method: api.pipeline.create.method,
         headers: { "Content-Type": "application/json" },
