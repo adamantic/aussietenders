@@ -6,6 +6,7 @@ import { Layout } from "@/components/Layout";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -93,13 +94,15 @@ export default function Dashboard() {
               AusTender (Federal)
             </Button>
             <Button
-              variant={showNSW ? "default" : "outline"}
+              variant="outline"
               size="sm"
-              onClick={() => setShowNSW(!showNSW)}
-              className="toggle-elevate"
+              disabled
+              className="opacity-60 cursor-not-allowed"
               data-testid="button-source-nsw"
+              title="NSW eTendering API is temporarily unavailable from cloud environments"
             >
               NSW eTendering
+              <Badge variant="outline" className="ml-2 text-xs">Unavailable</Badge>
             </Button>
           </div>
         </div>
