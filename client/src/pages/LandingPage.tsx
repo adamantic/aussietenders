@@ -22,7 +22,7 @@ export default function LandingPage() {
           <div className="bg-primary p-1.5 rounded-lg">
             <Building2 className="w-6 h-6 text-white" />
           </div>
-          <span className="font-display font-bold text-xl tracking-tight text-slate-900">GovTender Pro</span>
+          <span className="font-display font-bold text-xl tracking-tight text-slate-900">Aussie Tenders</span>
         </div>
         <div className="flex items-center gap-4">
           <a href="/api/login" className="text-sm font-medium text-gray-600 hover:text-gray-900">Log In</a>
@@ -35,14 +35,6 @@ export default function LandingPage() {
       {/* Hero */}
       <main className="flex-1">
         <section className="py-20 md:py-32 px-6 text-center max-w-5xl mx-auto space-y-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-700 text-sm font-medium animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-            </span>
-            New: AI-Powered Tender Summaries
-          </div>
-          
           <h1 className="text-5xl md:text-7xl font-display font-bold tracking-tight text-slate-900 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
             Win more government <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">contracts, faster.</span>
@@ -96,7 +88,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="bg-white border-t border-gray-100 py-12 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-gray-500 text-sm">© 2024 GovTender Pro. All rights reserved.</p>
+          <p className="text-gray-500 text-sm">© 2024 Aussie Tenders. All rights reserved.</p>
           <div className="flex gap-6 text-sm text-gray-600">
             <a href="#" className="hover:text-gray-900">Privacy</a>
             <a href="#" className="hover:text-gray-900">Terms</a>

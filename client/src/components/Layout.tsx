@@ -37,7 +37,7 @@ export function Layout({ children }: LayoutProps) {
             <div className="bg-primary p-1.5 rounded-lg">
               <Building2 className="w-6 h-6 text-white" />
             </div>
-            <span className="font-display font-bold text-xl tracking-tight">GovTender Pro</span>
+            <span className="font-display font-bold text-xl tracking-tight">Aussie Tenders</span>
           </Link>
         </div>
 
@@ -104,7 +104,7 @@ export function Layout({ children }: LayoutProps) {
       <div className="flex-1 ml-64 flex flex-col min-h-screen">
         <header className="h-16 bg-white border-b border-border sticky top-0 z-10 flex items-center justify-between px-8 shadow-sm">
           <h1 className="text-lg font-semibold text-gray-900">
-            {navigation.find((n) => n.href === location)?.name || "GovTender Pro"}
+            {navigation.find((n) => n.href === location)?.name || "Aussie Tenders"}
           </h1>
           <button className="relative p-2 text-gray-500 hover:text-primary transition-colors">
             <Bell className="w-5 h-5" />

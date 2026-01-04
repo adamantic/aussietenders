@@ -1,8 +1,8 @@
-# GovTender Pro
+# Aussie Tenders
 
 ## Overview
 
-GovTender Pro is an AI-powered platform that helps Small and Medium Enterprises (SMEs) discover and apply for government contracts. The application aggregates tenders from NSW and Federal Australian sources (AusTender, NSW eTendering), provides AI-generated summaries using Anthropic Claude, and offers pipeline management for tracking tender opportunities.
+Aussie Tenders is an AI-powered platform that helps Small and Medium Enterprises (SMEs) discover and apply for government contracts. The application aggregates tenders from NSW and Federal Australian sources (AusTender, NSW eTendering), provides AI-generated summaries using Anthropic Claude, and offers pipeline management for tracking tender opportunities.
 
 ## User Preferences
 
