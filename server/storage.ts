@@ -10,7 +10,7 @@ import {
 
 export interface IStorage {
   // Tenders
-  getTenders(params: { search?: string, category?: string, source?: string, page?: number, limit?: number }): Promise<{ data: Tender[], total: number }>;
+  getTenders(params: { search?: string, category?: string, source?: string, sources?: string[], page?: number, limit?: number }): Promise<{ data: Tender[], total: number }>;
   getTender(id: number): Promise<Tender | undefined>;
   createTender(tender: InsertTender): Promise<Tender>;
   
@@ -32,7 +32,7 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   // === TENDERS ===
-  async getTenders({ search, category, source, page = 1, limit = 20 }: { search?: string, category?: string, source?: string, page?: number, limit?: number }) {
+  async getTenders({ search, category, source, sources, page = 1, limit = 20 }: { search?: string, category?: string, source?: string, sources?: string[], page?: number, limit?: number }) {
     const offset = (page - 1) * limit;
     
     // Build where clause
@@ -43,13 +43,15 @@ export class DatabaseStorage implements IStorage {
       );
     }
     if (category) {
-      // JSON array contains check (simplified for MVP as text search or specific operator if pg)
-      // For MVP, we might just assume text search in description/title covers it, or exact match if categories was text.
-      // Since it's jsonb array, we use @> operator
-      // conditions.push(sql`${tenders.categories} @> ${JSON.stringify([category])}`);
+      // JSONB array contains check using @> operator
+      conditions.push(sql`${tenders.categories}::jsonb @> ${JSON.stringify([category])}::jsonb`);
     }
     if (source) {
       conditions.push(eq(tenders.source, source));
+    }
+    if (sources && sources.length > 0) {
+      // Filter by multiple sources using IN clause
+      conditions.push(sql`${tenders.source} IN (${sql.join(sources.map(s => sql`${s}`), sql`, `)})`);
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

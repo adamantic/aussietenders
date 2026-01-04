@@ -5,6 +5,7 @@ interface TenderSearchParams {
   search?: string;
   category?: string;
   source?: string;
+  sources?: string[]; // Array of sources to filter by
   page?: number;
   limit?: number;
 }
@@ -22,6 +23,9 @@ export function useTenders(params: TenderSearchParams = {}) {
       if (params.search) url.searchParams.append("search", params.search);
       if (params.category) url.searchParams.append("category", params.category);
       if (params.source) url.searchParams.append("source", params.source);
+      if (params.sources && params.sources.length > 0) {
+        url.searchParams.append("sources", params.sources.join(","));
+      }
       if (params.page) url.searchParams.append("page", params.page.toString());
       if (params.limit) url.searchParams.append("limit", params.limit.toString());
 

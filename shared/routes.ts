@@ -24,6 +24,7 @@ export const api = {
         search: z.string().optional(),
         category: z.string().optional(),
         source: z.string().optional(),
+        sources: z.string().optional(), // Comma-separated list of sources
         page: z.coerce.number().optional(),
         limit: z.coerce.number().optional(),
       }).optional(),
