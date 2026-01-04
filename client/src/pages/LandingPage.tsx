@@ -36,7 +36,7 @@ export default function LandingPage() {
 
       {/* Hero */}
       <main className="flex-1">
-        <section className="py-20 md:py-32 px-6 text-center max-w-5xl mx-auto space-y-8">
+        <section className="py-12 md:py-20 px-6 text-center max-w-5xl mx-auto space-y-6">
           <h1 className="text-5xl md:text-7xl font-display font-bold tracking-tight text-slate-900 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
             Win government <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">contracts, faster.</span>
@@ -46,22 +46,19 @@ export default function LandingPage() {
             The intelligent platform for SMEs to discover, track, and manage government tender opportunities with AI-driven insights.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
+          <div className="flex justify-center pt-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
             <SignInButton mode="modal">
               <Button size="lg" className="rounded-full text-lg px-8 h-12" data-testid="button-start-trial">
-                Start Free Trial <ArrowRight className="ml-2 w-5 h-5" />
+                Get Started! <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </SignInButton>
-            <Button size="lg" variant="outline" className="rounded-full text-lg px-8 h-12">
-              View Demo
-            </Button>
           </div>
         </section>
 
         {/* Features Grid */}
-        <section className="bg-slate-50 py-24 px-6">
+        <section className="bg-slate-50 py-16 px-6">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
+            <div className="text-center mb-10">
               <h2 className="text-3xl font-bold font-display text-slate-900">Everything you need to succeed</h2>
               <p className="text-gray-600 mt-4">Streamline your tendering process from discovery to submission.</p>
             </div>
@@ -88,7 +85,7 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 py-12 px-6">
+      <footer className="bg-white border-t border-gray-100 py-8 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-gray-500 text-sm">© 2024 Aussie Tenders. All rights reserved.</p>
           <div className="flex gap-6 text-sm text-gray-600">
