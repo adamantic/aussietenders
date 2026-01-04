@@ -1,4 +1,5 @@
 import type { InsertTender } from "@shared/schema";
+import puppeteer from "puppeteer";
 
 interface NSWTender {
   RFTUUID: string;
@@ -25,35 +26,85 @@ interface NSWTenderSearchResponse {
 
 export async function fetchNSWTenders(): Promise<InsertTender[]> {
   const tenders: InsertTender[] = [];
+  let browser = null;
 
   try {
-    const url = "https://www.tenders.nsw.gov.au/?event=public.api.tender.search&ResultsPerPage=100";
-    console.log(`[NSW eTendering] Fetching tenders from: ${url}`);
-
-    const response = await fetch(url, {
-      headers: {
-        "Accept": "application/json, text/plain, */*",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      },
-      redirect: "follow",
+    console.log("[NSW eTendering] Starting headless browser...");
+    
+    browser = await puppeteer.launch({
+      headless: true,
+      executablePath: process.env.CHROMIUM_PATH || "/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--disable-features=VizDisplayCompositor",
+        "--single-process",
+      ],
     });
 
-    if (!response.ok) {
-      console.error(`[NSW eTendering] API error: ${response.status} ${response.statusText}`);
+    const page = await browser.newPage();
+    
+    await page.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    );
+    
+    await page.setExtraHTTPHeaders({
+      "Accept": "application/json, text/plain, */*",
+      "Accept-Language": "en-AU,en;q=0.9",
+    });
+
+    console.log(`[NSW eTendering] Warming up browser session...`);
+    await page.goto("https://tenders.nsw.gov.au", {
+      waitUntil: "networkidle0",
+      timeout: 30000,
+    });
+    
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    const url = "https://tenders.nsw.gov.au/?event=public.api.tender.search&rftType=published";
+    console.log(`[NSW eTendering] Fetching API data from: ${url}`);
+    
+    const apiResponse = await page.evaluate(async (apiUrl) => {
+      try {
+        const resp = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            "Accept": "application/json",
+          },
+          credentials: "include",
+        });
+        const contentType = resp.headers.get("content-type") || "";
+        const text = await resp.text();
+        return { ok: resp.ok, status: resp.status, contentType, text };
+      } catch (err: unknown) {
+        return { ok: false, status: 0, contentType: "", text: String(err) };
+      }
+    }, url);
+
+    console.log(`[NSW eTendering] API status: ${apiResponse.status}, Content-Type: ${apiResponse.contentType}`);
+
+    if (!apiResponse.ok) {
+      console.error(`[NSW eTendering] API error: ${apiResponse.status}`);
+      console.log(`[NSW eTendering] Response preview: ${apiResponse.text.slice(0, 200)}`);
       return tenders;
     }
 
-    const contentType = response.headers.get("content-type") || "";
-    const text = await response.text();
+    const contentType = apiResponse.contentType;
+    const text = apiResponse.text;
     
+    console.log(`[NSW eTendering] Content-Type: ${contentType}`);
+    console.log(`[NSW eTendering] Response length: ${text.length} chars`);
+
     if (!text || text.trim().length === 0) {
       console.log("[NSW eTendering] Empty response received");
       return tenders;
     }
 
     if (!contentType.includes("application/json")) {
-      console.log(`[NSW eTendering] Non-JSON response: ${contentType}`);
-      console.log(`[NSW eTendering] Response preview: ${text.slice(0, 200)}`);
+      console.log(`[NSW eTendering] Non-JSON response detected`);
+      console.log(`[NSW eTendering] Response preview: ${text.slice(0, 300)}`);
       return tenders;
     }
 
@@ -62,7 +113,7 @@ export async function fetchNSWTenders(): Promise<InsertTender[]> {
       data = JSON.parse(text);
     } catch (parseErr) {
       console.error("[NSW eTendering] Failed to parse JSON:", parseErr);
-      console.log(`[NSW eTendering] Response preview: ${text.slice(0, 200)}`);
+      console.log(`[NSW eTendering] Response preview: ${text.slice(0, 300)}`);
       return tenders;
     }
 
@@ -70,6 +121,7 @@ export async function fetchNSWTenders(): Promise<InsertTender[]> {
 
     if (!Array.isArray(tenderList)) {
       console.log("[NSW eTendering] No tender list found in response");
+      console.log(`[NSW eTendering] Response keys: ${Object.keys(data).join(", ")}`);
       return tenders;
     }
 
@@ -89,6 +141,10 @@ export async function fetchNSWTenders(): Promise<InsertTender[]> {
     console.log(`[NSW eTendering] Successfully mapped ${tenders.length} tenders`);
   } catch (error) {
     console.error("[NSW eTendering] Failed to fetch tenders:", error);
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 
   return tenders;
@@ -152,22 +208,42 @@ function mapNSWToTender(nswTender: NSWTender): InsertTender | null {
 }
 
 export async function testNSWConnection(): Promise<boolean> {
+  let browser = null;
+  
   try {
-    const url = "https://www.tenders.nsw.gov.au/?event=public.api.tender.search&ResultsPerPage=1";
-
-    const response = await fetch(url, {
-      headers: {
-        "Accept": "application/json, text/plain, */*",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      },
-      redirect: "follow",
+    browser = await puppeteer.launch({
+      headless: true,
+      executablePath: process.env.CHROMIUM_PATH || "/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--single-process",
+      ],
     });
 
-    if (!response.ok) return false;
+    const page = await browser.newPage();
+    await page.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    );
+
+    const url = "https://tenders.nsw.gov.au/?event=public.api.tender.search&rftType=published";
+    const response = await page.goto(url, {
+      waitUntil: "networkidle0",
+      timeout: 30000,
+    });
+
+    if (!response || response.status() !== 200) {
+      return false;
+    }
     
-    const text = await response.text();
-    return text.length > 0;
+    const contentType = response.headers()["content-type"] || "";
+    return contentType.includes("application/json");
   } catch {
     return false;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 }
