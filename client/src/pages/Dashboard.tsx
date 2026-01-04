@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useTenders } from "@/hooks/use-tenders";
 import { useAddToPipeline } from "@/hooks/use-pipeline";
+import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +36,10 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState<string>("all");
   const [page, setPage] = useState(1);
+
+  const { data: categories = [] } = useQuery<string[]>({
+    queryKey: ["/api/tenders/categories"],
+  });
 
   const { data: tendersData, isLoading } = useTenders({
     search: searchTerm,
@@ -82,16 +87,13 @@ export default function Dashboard() {
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger className="w-full md:w-[200px]" data-testid="select-category">
               <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
-              <SelectValue placeholder="Category" />
+              <SelectValue placeholder="Tender Type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="IT Services">IT Services</SelectItem>
-              <SelectItem value="Construction">Construction</SelectItem>
-              <SelectItem value="Health">Health Services</SelectItem>
-              <SelectItem value="Consulting">Consulting</SelectItem>
-              <SelectItem value="Services">Services</SelectItem>
-              <SelectItem value="Supplies">Supplies</SelectItem>
+              <SelectItem value="all">All Types</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

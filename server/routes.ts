@@ -37,6 +37,16 @@ export async function registerRoutes(
     }
   });
 
+  // Get distinct categories for filter dropdown (must be before :id route)
+  app.get("/api/tenders/categories", async (req, res) => {
+    try {
+      const categories = await storage.getDistinctCategories();
+      res.json(categories);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch categories" });
+    }
+  });
+
   app.get(api.tenders.get.path, async (req, res) => {
     const tender = await storage.getTender(Number(req.params.id));
     if (!tender) return res.status(404).json({ message: "Tender not found" });

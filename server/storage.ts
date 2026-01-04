@@ -13,6 +13,7 @@ export interface IStorage {
   getTenders(params: { search?: string, category?: string, source?: string, sources?: string[], page?: number, limit?: number }): Promise<{ data: Tender[], total: number }>;
   getTender(id: number): Promise<Tender | undefined>;
   getTenderByExternalId(externalId: string): Promise<Tender | undefined>;
+  getDistinctCategories(): Promise<string[]>;
   createTender(tender: InsertTender): Promise<Tender>;
   updateTender(id: number, tender: Partial<InsertTender>): Promise<Tender | undefined>;
   clearTenders(): Promise<void>;
@@ -83,6 +84,13 @@ export class DatabaseStorage implements IStorage {
   async getTenderByExternalId(externalId: string): Promise<Tender | undefined> {
     const [tender] = await db.select().from(tenders).where(eq(tenders.externalId, externalId));
     return tender;
+  }
+
+  async getDistinctCategories(): Promise<string[]> {
+    const result = await db.execute(
+      sql`SELECT DISTINCT jsonb_array_elements_text(categories) as category FROM ${tenders} ORDER BY category`
+    );
+    return result.rows.map((row: any) => row.category as string);
   }
 
   async createTender(tender: InsertTender): Promise<Tender> {
