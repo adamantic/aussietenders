@@ -67,9 +67,13 @@ export function useSummarizeTender() {
       return api.tenders.summarize.responses[200].parse(await res.json());
     },
     onSuccess: () => {
-      // Invalidate all tender queries to refresh the summary field
-      queryClient.invalidateQueries({ queryKey: [api.tenders.list.path] });
-      queryClient.invalidateQueries({ queryKey: [api.tenders.get.path] });
+      // Invalidate all tender queries using predicate to match any query that starts with the path
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return key === api.tenders.list.path || key === api.tenders.get.path;
+        }
+      });
     },
   });
 }

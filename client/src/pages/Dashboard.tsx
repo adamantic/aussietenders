@@ -224,10 +224,10 @@ function TenderCard({ tender, isAuthenticated }: { tender: any; isAuthenticated:
                 {tender.description}
               </p>
 
-              {/* AI Categories */}
-              {tender.aiCategories && tender.aiCategories.length > 0 && (
+              {/* AI Categories and Summary indicator */}
+              {(tender.aiCategories?.length > 0 || tender.aiSummary) && (
                 <div className="flex flex-wrap gap-1 pt-1">
-                  {tender.aiCategories.map((cat: string) => (
+                  {tender.aiCategories?.map((cat: string) => (
                     <span key={cat} className="text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-md font-medium">
                       {cat}
                     </span>

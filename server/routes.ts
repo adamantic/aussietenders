@@ -93,7 +93,11 @@ export async function registerRoutes(
       const contentBlock = message.content[0];
       const summary = contentBlock.type === 'text' ? contentBlock.text : "Unable to generate summary";
 
-      await storage.updateTender(tenderId, { aiSummary: summary });
+      await storage.updateTender(tenderId, { 
+        aiSummary: summary, 
+        aiEnriched: true, 
+        aiEnrichedAt: new Date() 
+      });
 
       res.json({ summary });
     } catch (error) {
@@ -196,15 +200,12 @@ async function initializeTenders() {
   try {
     console.log("[TenderSync] Initializing tender data from government APIs...");
     
-    // Clear existing sample data
-    await storage.clearTenders();
-    console.log("[TenderSync] Cleared existing tender data");
-    
-    // Sync from real APIs
+    // Sync from real APIs (uses upsert to preserve AI enrichment data)
     const results = await syncAllTenders();
     
     const totalAdded = results.reduce((sum, r) => sum + r.added, 0);
-    console.log(`[TenderSync] Initial sync complete: ${totalAdded} tenders imported`);
+    const totalUpdated = results.reduce((sum, r) => sum + r.updated, 0);
+    console.log(`[TenderSync] Initial sync complete: ${totalAdded} added, ${totalUpdated} updated`);
   } catch (error) {
     console.error("[TenderSync] Initial sync failed:", error);
   }
