@@ -36,7 +36,7 @@ export default function LandingPage() {
       <main className="flex-1">
         <section className="py-20 md:py-32 px-6 text-center max-w-5xl mx-auto space-y-8">
           <h1 className="text-5xl md:text-7xl font-display font-bold tracking-tight text-slate-900 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-            Win more government <br/>
+            Win government <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">contracts, faster.</span>
           </h1>
           
