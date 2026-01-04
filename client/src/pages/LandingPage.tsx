@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle2, Building2, Search, BarChart3 } from "lucide-react";
+import { ArrowRight, Building2, Search, BarChart3 } from "lucide-react";
 
 export default function LandingPage() {
   const { user, isLoading } = useAuth();
@@ -108,14 +108,6 @@ function FeatureCard({ icon: Icon, title, description }: any) {
       </div>
       <h3 className="text-xl font-bold text-slate-900 mb-3">{title}</h3>
       <p className="text-gray-600 leading-relaxed">{description}</p>
-      <ul className="mt-6 space-y-2">
-        {[1, 2, 3].map((_, i) => (
-          <li key={i} className="flex items-center gap-2 text-sm text-gray-500">
-            <CheckCircle2 className="w-4 h-4 text-green-500" />
-            <span>Key benefit feature point</span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
